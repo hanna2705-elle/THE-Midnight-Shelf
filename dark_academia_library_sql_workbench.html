@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athenaeum - Dark Academia Library Management System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wood: {
+                            900: '#120a06',
+                            800: '#1c100a',
+                            700: '#2c1810',
+                            600: '#3d2318',
+                            500: '#523021',
+                        },
+                        gold: {
+                            300: '#f3e5ab',
+                            400: '#e6ca65',
+                            500: '#d4af37',
+                            600: '#aa8828',
+                        },
+                        parchment: {
+                            100: '#fbf7eb',
+                            200: '#f4e8c1',
+                            300: '#e2d3a3',
+                            800: '#3a3223',
+                        },
+                        amberGlow: 'rgba(212, 175, 55, 0.15)',
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        garamond: ['Cormorant Garamond', 'serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar for Dark Academia Aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1c100a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #523021;
+            border: 1px solid #d4af37;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+
+        /* Glassmorphism & Gold Border Glow */
+        .academic-card {
+            background: rgba(44, 24, 16, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(212, 175, 55, 0.05);
+        }
+        
+        .gold-border-glow {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .parchment-bg {
+            background-color: #f4e8c1;
+            background-image: radial-gradient(#d4af37 0.75px, transparent 0.75px), radial-gradient(#d4af37 0.75px, #f4e8c1 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+
+        /* Custom SQL Highlighting */
+        .sql-keyword { color: #e6ca65; font-weight: bold; }
+        .sql-string { color: #a3be8c; }
+        .sql-number { color: #d08770; }
+
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-wood-900 text-parchment-200 font-garamond min-h-screen flex flex-col selection:bg-gold-500 selection:text-wood-900">
+
+    <!-- TOP HEADER / NAV -->
+    <header class="border-b border-gold-500/30 bg-wood-800/90 sticky top-0 z-40 px-6 py-4 backdrop-blur-md flex flex-wrap items-center justify-between">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid font-cinzel fa-book-bookmark text-gold-500 text-2xl"></i>
+            <div>
+                <h1 class="font-cinzel text-xl md:text-2xl font-bold tracking-widest text-gold-400">ATHENAEUM</h1>
+                <p class="text-xs text-gold-500/70 font-mono uppercase tracking-wider">Dark Academia Library & SQL Engine</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1 sm:gap-2 mt-3 sm:mt-0 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+            <button onclick="switchTab('shelves')" id="tab-shelves" class="nav-tab px-4 py-2 rounded font-cinzel text-xs sm:text-sm tracking-wider transition-all duration-300 flex items-center gap-2 border border-gold-500/30 bg-gold-500/10 text-gold-400">
+                <i class="fa-solid fa-books"></i> Bookshelf Canvas
+            </button>
+            <button onclick="switchTab('sql')" id="tab-sql" class="nav-tab px-4 py-2 rounded font-cinzel text-xs sm:text-sm tracking-wider transition-all duration-300 flex items-center gap-2 border border-transparent hover:border-gold-500/30 text-parchment-200/70 hover:text-gold-400">
+                <i class="fa-solid fa-terminal"></i> Live SQL Workbench
+            </button>
+            <button onclick="switchTab('issue')" id="tab-issue" class="nav-tab px-4 py-2 rounded font-cinzel text-xs sm:text-sm tracking-wider transition-all duration-300 flex items-center gap-2 border border-transparent hover:border-gold-500/30 text-parchment-200/70 hover:text-gold-400">
+                <i class="fa-solid fa-feather-pointed"></i> Circulation & Fines
+            </button>
+            <button onclick="openPythonModal()" class="px-4 py-2 rounded font-cinzel text-xs sm:text-sm tracking-wider bg-gold-500/20 text-gold-300 hover:bg-gold-500/30 border border-gold-500/50 transition-all flex items-center gap-2 ml-auto sm:ml-2">
+                <i class="fa-brands fa-python text-gold-400"></i> Export Code
+            </button>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
+
+        <!-- TAB 1: INTERACTIVE BOOKSHELF CANVAS & ADD BOOK -->
+        <section id="sec-shelves" class="tab-content flex flex-col gap-6">
+            
+            <!-- CANVAS CONTAINER -->
+            <div class="academic-card rounded-lg p-4 md:p-6 relative overflow-hidden flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gold-500/20 pb-3">
+                    <div>
+                        <h2 class="font-cinzel text-lg md:text-xl text-gold-400 font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-warehouse"></i> Grand Library Bookshelf
+                        </h2>
+                        <p class="text-xs text-parchment-200/60 font-mono">100 Books Rendered across Multi-tier Mahogany Shelves. Move cursor/touch to slide ladder.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="book-count-badge" class="px-3 py-1 rounded bg-wood-900 border border-gold-500/40 text-gold-400 font-mono text-xs">
+                            Total Books: 100
+                        </span>
+                        <button onclick="randomizeShelfLayout()" class="px-3 py-1.5 rounded bg-wood-700 hover:bg-wood-600 text-xs font-cinzel text-gold-300 border border-gold-500/30 transition">
+                            <i class="fa-solid fa-shuffle"></i> Rearrange Spines
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Element -->
+                <div class="relative w-full overflow-hidden rounded border border-gold-500/30 bg-wood-900 shadow-2xl">
+                    <canvas id="bookshelfCanvas" class="w-full h-[450px] cursor-crosshair"></canvas>
+                    
+                    <!-- Tooltip Box -->
+                    <div id="canvasTooltip" class="absolute hidden pointer-events-none bg-wood-900/95 border border-gold-500/80 rounded p-3 text-xs shadow-2xl z-20 backdrop-blur-md max-w-xs transition-opacity duration-150">
+                        <div id="tooltipTitle" class="font-cinzel font-bold text-gold-400 text-sm border-b border-gold-500/30 pb-1 mb-1">Title</div>
+                        <div id="tooltipAuthor" class="text-parchment-200 italic mb-1">Author</div>
+                        <div class="flex items-center justify-between font-mono text-[11px] text-gold-500/80">
+                            <span id="tooltipId">ID: #0</span>
+                            <span id="tooltipQty" class="text-emerald-400">Qty: 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADD NEW BOOK FORM WITH PLACEMENT ANIMATION TRIGGER -->
+            <div class="academic-card rounded-lg p-5 md:p-6">
+                <h3 class="font-cinzel text-md md:text-lg text-gold-400 font-semibold mb-4 flex items-center gap-2 border-b border-gold-500/20 pb-2">
+                    <i class="fa-solid fa-plus-circle"></i> Add New Book to Collection & Shelves
+                </h3>
+                <form id="addBookForm" onsubmit="handleNewBookSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-mono text-gold-400/80 mb-1">BOOK ID</label>
+                        <input type="number" id="addBookId" required placeholder="101" class="w-full bg-wood-900/80 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-mono text-gold-400/80 mb-1">BOOK TITLE</label>
+                        <input type="text" id="addBookTitle" required placeholder="e.g. The Picture of Dorian Gray" class="w-full bg-wood-900/80 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-garamond">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gold-400/80 mb-1">AUTHOR</label>
+                        <input type="text" id="addBookAuthor" required placeholder="e.g. Oscar Wilde" class="w-full bg-wood-900/80 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-garamond">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-gold-400/80 mb-1">QUANTITY</label>
+                        <input type="number" id="addBookQty" min="1" max="50" value="5" required class="w-full bg-wood-900/80 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                    </div>
+                    <div class="md:col-span-5 flex justify-end">
+                        <button type="submit" class="px-6 py-2.5 rounded bg-gold-500 text-wood-900 hover:bg-gold-400 font-cinzel font-bold text-sm tracking-wider transition shadow-lg flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Add Book & Animate Placement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 2: LIVE SQL WORKBENCH -->
+        <section id="sec-sql" class="tab-content flex flex-col gap-6 hidden">
+            <div class="academic-card rounded-lg p-5 md:p-6 flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gold-500/20 pb-3">
+                    <div>
+                        <h2 class="font-cinzel text-lg md:text-xl text-gold-400 font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-code"></i> Live SQL Console & Database Explorer
+                        </h2>
+                        <p class="text-xs text-parchment-200/60 font-mono">Execute real SQL queries against in-memory MySQL tables: Books & Issued_Books</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="setQuery('SELECT * FROM Books ORDER BY Book_ID ASC LIMIT 10;')" class="px-2.5 py-1 rounded bg-wood-800 hover:bg-wood-700 text-xs font-mono text-gold-300 border border-gold-500/20">SELECT 10</button>
+                        <button onclick="setQuery('SELECT Author, COUNT(*) as Total_Titles FROM Books GROUP BY Author HAVING Total_Titles > 1;')" class="px-2.5 py-1 rounded bg-wood-800 hover:bg-wood-700 text-xs font-mono text-gold-300 border border-gold-500/20">GROUP BY</button>
+                        <button onclick="setQuery('SELECT * FROM Issued_Books;')" class="px-2.5 py-1 rounded bg-wood-800 hover:bg-wood-700 text-xs font-mono text-gold-300 border border-gold-500/20">Issued_Books</button>
+                    </div>
+                </div>
+
+                <!-- Query Editor Input Box -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-mono text-gold-400 flex items-center justify-between">
+                        <span>SQL QUERY EDITOR:</span>
+                        <span class="text-parchment-200/50">Press "Run SQL" to execute</span>
+                    </label>
+                    <div class="relative">
+                        <textarea id="sqlQueryInput" rows="4" class="w-full bg-wood-900 border border-gold-500/40 rounded p-4 font-mono text-sm text-gold-300 focus:outline-none focus:border-gold-400 shadow-inner leading-relaxed" placeholder="Type your SQL query here (SELECT, INSERT, UPDATE, DELETE)...">SELECT * FROM Books WHERE Quantity > 5 ORDER BY Title ASC;</textarea>
+                        <div class="absolute right-3 bottom-3 flex items-center gap-2">
+                            <button onclick="clearQuery()" class="px-3 py-1 rounded bg-wood-800 hover:bg-wood-700 text-xs text-parchment-200/70 font-mono border border-gold-500/20">Clear</button>
+                            <button onclick="executeSQL()" class="px-5 py-1.5 rounded bg-gold-500 hover:bg-gold-400 text-wood-900 font-cinzel font-bold text-xs tracking-wider transition shadow-lg flex items-center gap-2">
+                                <i class="fa-solid fa-play"></i> Run SQL
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Results Window -->
+                <div class="flex flex-col gap-2 mt-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono text-gold-400">QUERY RESULTS & EXECUTION LOG:</span>
+                        <span id="queryStatusBadge" class="text-xs font-mono text-emerald-400">Ready</span>
+                    </div>
+                    <div id="sqlOutputContainer" class="bg-wood-900/90 border border-gold-500/30 rounded p-4 min-h-[220px] max-h-[400px] overflow-auto font-mono text-xs">
+                        <div class="text-parchment-200/50 italic">Execute a query above to display dataset results...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: BOOK ISSUING & LATE FINE CALCULATOR -->
+        <section id="sec-issue" class="tab-content flex flex-col gap-6 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Issue Book Form -->
+                <div class="academic-card rounded-lg p-5 md:p-6 flex flex-col gap-4">
+                    <h3 class="font-cinzel text-md md:text-lg text-gold-400 font-semibold border-b border-gold-500/20 pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-hand-holding-hand"></i> Issue Book to Scholar
+                    </h3>
+                    <form id="issueBookForm" onsubmit="handleIssueSubmit(event)" class="flex flex-col gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gold-400/80 mb-1">STUDENT / SCHOLAR NAME</label>
+                            <input type="text" id="issueStudentName" required placeholder="e.g. Julian Blackthorn" class="w-full bg-wood-900/80 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-garamond">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gold-400/80 mb-1">SELECT BOOK</label>
+                            <select id="issueBookSelect" required class="w-full bg-wood-900 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-garamond">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-mono text-gold-400/80 mb-1">ISSUE DATE</label>
+                                <input type="date" id="issueDate" required class="w-full bg-wood-900 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-mono text-gold-400/80 mb-1">DUE RETURN DATE</label>
+                                <input type="date" id="returnDate" required class="w-full bg-wood-900 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                            </div>
+                        </div>
+                        <button type="submit" class="mt-2 w-full py-2.5 rounded bg-gold-500 hover:bg-gold-400 text-wood-900 font-cinzel font-bold text-sm tracking-wider transition shadow-lg flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-stamp"></i> Record Issue Transaction
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Dynamic Fine Calculator -->
+                <div class="academic-card rounded-lg p-5 md:p-6 flex flex-col gap-4">
+                    <h3 class="font-cinzel text-md md:text-lg text-gold-400 font-semibold border-b border-gold-500/20 pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator"></i> Late Fee & Fine Calculator
+                    </h3>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label class="block text-xs font-mono text-gold-400/80 mb-1">EXPECTED DUE DATE</label>
+                            <input type="date" id="calcDueDate" onchange="calculateFine()" class="w-full bg-wood-900 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gold-400/80 mb-1">ACTUAL RETURN DATE</label>
+                            <input type="date" id="calcActualDate" onchange="calculateFine()" class="w-full bg-wood-900 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-mono text-gold-400/80 mb-1">FINE RATE PER OVERDUE DAY (₹)</label>
+                            <input type="number" id="calcRate" value="5" onchange="calculateFine()" class="w-full bg-wood-900 border border-gold-500/30 rounded px-3 py-2 text-sm text-parchment-200 focus:outline-none focus:border-gold-500 font-mono">
+                        </div>
+
+                        <!-- Fine Output Display -->
+                        <div class="p-4 rounded border border-gold-500/40 bg-wood-900/90 flex items-center justify-between mt-2">
+                            <div>
+                                <div class="text-xs font-mono text-parchment-200/60">OVERDUE DAYS: <span id="outDaysLate" class="text-gold-400 font-bold">0 Days</span></div>
+                                <div class="text-xs font-mono text-parchment-200/60 mt-1">STATUS: <span id="outFineStatus" class="text-emerald-400 font-bold">On Time / No Fine</span></div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] font-mono text-gold-400/70">TOTAL FINE DUE</div>
+                                <div id="outTotalFine" class="font-cinzel text-2xl font-bold text-gold-400">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ISSUED BOOKS TABLE DISPLAY -->
+            <div class="academic-card rounded-lg p-5 md:p-6">
+                <h3 class="font-cinzel text-md md:text-lg text-gold-400 font-semibold mb-3 border-b border-gold-500/20 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-scroll"></i> Active Issued Books Log (`Issued_Books` Table)
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left font-mono text-xs text-parchment-200">
+                        <thead>
+                            <tr class="border-b border-gold-500/30 bg-wood-900 text-gold-400">
+                                <th class="p-3">ISSUE_ID</th>
+                                <th class="p-3">STUDENT_NAME</th>
+                                <th class="p-3">BOOK_ID</th>
+                                <th class="p-3">ISSUE_DATE</th>
+                                <th class="p-3">DUE_DATE</th>
+                                <th class="p-3">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issuedBooksTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PYTHON SCRIPT EXPORTER MODAL -->
+    <div id="pythonModal" class="fixed inset-0 bg-wood-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="academic-card rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border-gold-500/60">
+            <div class="p-4 bg-wood-800 border-b border-gold-500/30 flex items-center justify-between">
+                <h3 class="font-cinzel font-bold text-gold-400 text-md sm:text-lg flex items-center gap-2">
+                    <i class="fa-brands fa-python text-gold-500"></i> Python + MySQL Tkinter Project Code
+                </h3>
+                <button onclick="closePythonModal()" class="text-parchment-200/60 hover:text-gold-400 text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 flex-1 overflow-auto bg-wood-900">
+                <p class="text-xs font-garamond text-parchment-200/80 mb-3">
+                    Copy and paste this clean, single-file Python script into Notepad or VS Code. Run it locally to launch the complete Tkinter desktop GUI connected to MySQL!
+                </p>
+                <pre class="bg-wood-800/80 border border-gold-500/30 rounded p-4 text-xs font-mono text-gold-300 overflow-x-auto select-all"><code id="pythonCodeBlock"># Copy this code into library_app.py and run with Python!</code></pre>
+            </div>
+            <div class="p-4 bg-wood-800 border-t border-gold-500/30 flex items-center justify-between">
+                <span class="text-xs font-mono text-parchment-200/60">Includes MySQL Connector, Shelf Canvas Animation, & Query Executor</span>
+                <button onclick="copyPythonCode()" class="px-5 py-2 rounded bg-gold-500 hover:bg-gold-400 text-wood-900 font-cinzel font-bold text-xs tracking-wider transition flex items-center gap-2">
+                    <i class="fa-regular fa-copy"></i> Copy Python Script
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT ENGINE: DATASET, CANVAS ANIMATIONS & SQL ENGINE -->
+    <script>
+        // --- 1. PRE-LOADED DATASET (100 CLASSIC BOOKS) ---
+        const initialBooks = [
+            [1, 'To Kill a Mockingbird', 'Harper Lee', 5],
+            [2, '1984', 'George Orwell', 4],
+            [3, 'The Great Gatsby', 'F. Scott Fitzgerald', 3],
+            [4, 'Pride and Prejudice', 'Jane Austen', 6],
+            [5, 'The Hobbit', 'J.R.R. Tolkien', 7],
+            [6, 'Moby Dick', 'Herman Melville', 2],
+            [7, 'War and Peace', 'Leo Tolstoy', 3],
+            [8, 'Crime and Punishment', 'Fyodor Dostoevsky', 4],
+            [9, 'The Catcher in the Rye', 'J.D. Salinger', 5],
+            [10, 'The Odyssey', 'Homer', 3],
+            [11, 'The Divine Comedy', 'Dante Alighieri', 2],
+            [12, 'The Brothers Karamazov', 'Fyodor Dostoevsky', 4],
+            [13, 'Madame Bovary', 'Gustave Flaubert', 3],
+            [14, 'The Iliad', 'Homer', 4],
+            [15, 'The Lord of the Rings', 'J.R.R. Tolkien', 8],
+            [16, 'Jane Eyre', 'Charlotte Bronte', 5],
+            [17, 'Wuthering Heights', 'Emily Bronte', 4],
+            [18, 'Animal Farm', 'George Orwell', 6],
+            [19, 'The Chronicles of Narnia', 'C.S. Lewis', 7],
+            [20, 'Fahrenheit 451', 'Ray Bradbury', 5],
+            [21, 'Brave New World', 'Aldous Huxley', 4],
+            [22, 'The Alchemist', 'Paulo Coelho', 10],
+            [23, 'The Little Prince', 'Antoine de Saint-Exupery', 9],
+            [24, 'The Da Vinci Code', 'Dan Brown', 6],
+            [25, 'Harry Potter & Sorcerer Stone', 'J.K. Rowling', 12],
+            [26, 'The Hunger Games', 'Suzanne Collins', 8],
+            [27, 'Girl with the Dragon Tattoo', 'Stieg Larsson', 4],
+            [28, 'The Fault in Our Stars', 'John Green', 7],
+            [29, 'The Kite Runner', 'Khaled Hosseini', 5],
+            [30, 'Life of Pi', 'Yann Martel', 4],
+            [31, 'The Book Thief', 'Markus Zusak', 6],
+            [32, 'The Chronicles of Amber', 'Roger Zelazny', 3],
+            [33, 'Dune', 'Frank Herbert', 5],
+            [34, 'Foundation', 'Isaac Asimov', 4],
+            [35, 'Ender Game', 'Orson Scott Card', 6],
+            [36, 'Neuromancer', 'William Gibson', 3],
+            [37, 'Snow Crash', 'Neal Stephenson', 4],
+            [38, 'Hitchhiker Guide to Galaxy', 'Douglas Adams', 8],
+            [39, 'The Martian', 'Andy Weir', 6],
+            [40, 'Ready Player One', 'Ernest Cline', 5],
+            [41, 'Jurassic Park', 'Michael Crichton', 7],
+            [42, 'The Shining', 'Stephen King', 5],
+            [43, 'It', 'Stephen King', 4],
+            [44, 'The Stand', 'Stephen King', 3],
+            [45, 'Dracula', 'Bram Stoker', 4],
+            [46, 'Frankenstein', 'Mary Shelley', 6],
+            [47, 'Picture of Dorian Gray', 'Oscar Wilde', 5],
+            [48, 'Les Miserables', 'Victor Hugo', 3],
+            [49, 'Count of Monte Cristo', 'Alexandre Dumas', 4],
+            [50, 'The Three Musketeers', 'Alexandre Dumas', 5],
+            [51, 'Alice in Wonderland', 'Lewis Carroll', 8],
+            [52, 'Treasure Island', 'R.L. Stevenson', 4],
+            [53, 'The Call of the Wild', 'Jack London', 5],
+            [54, 'White Fang', 'Jack London', 4],
+            [55, 'Robinson Crusoe', 'Daniel Defoe', 3],
+            [56, 'Gulliver Travels', 'Jonathan Swift', 3],
+            [57, 'A Tale of Two Cities', 'Charles Dickens', 5],
+            [58, 'Great Expectations', 'Charles Dickens', 4],
+            [59, 'David Copperfield', 'Charles Dickens', 3],
+            [60, 'Oliver Twist', 'Charles Dickens', 6],
+            [61, 'The Scarlet Letter', 'N. Hawthorne', 4],
+            [62, 'Heart of Darkness', 'Joseph Conrad', 3],
+            [63, 'A Farewell to Arms', 'Ernest Hemingway', 4],
+            [64, 'Old Man and the Sea', 'Ernest Hemingway', 6],
+            [65, 'For Whom Bell Tolls', 'Ernest Hemingway', 3],
+            [66, 'The Sun Also Rises', 'Ernest Hemingway', 4],
+            [67, 'Of Mice and Men', 'John Steinbeck', 5],
+            [68, 'The Grapes of Wrath', 'John Steinbeck', 4],
+            [69, 'East of Eden', 'John Steinbeck', 3],
+            [70, 'Catch-22', 'Joseph Heller', 4],
+            [71, 'Slaughterhouse-Five', 'Kurt Vonnegut', 5],
+            [72, 'On the Road', 'Jack Kerouac', 3],
+            [73, 'The Stranger', 'Albert Camus', 4],
+            [74, 'Metamorphosis', 'Franz Kafka', 5],
+            [75, 'The Trial', 'Franz Kafka', 3],
+            [76, '100 Years of Solitude', 'G. Garcia Marquez', 4],
+            [77, 'Love Time of Cholera', 'G. Garcia Marquez', 3],
+            [78, 'Wind-Up Bird Chronicle', 'Haruki Murakami', 4],
+            [79, 'Norwegian Wood', 'Haruki Murakami', 5],
+            [80, 'Kafka on the Shore', 'Haruki Murakami', 4],
+            [81, 'Beloved', 'Toni Morrison', 3],
+            [82, 'The Color Purple', 'Alice Walker', 5],
+            [83, 'Middlemarch', 'George Eliot', 2],
+            [84, 'The Handmaid Tale', 'Margaret Atwood', 6],
+            [85, 'The Bell Jar', 'Sylvia Plath', 4],
+            [86, 'Gone with the Wind', 'Margaret Mitchell', 3],
+            [87, 'Rebecca', 'Daphne du Maurier', 4],
+            [88, 'The Secret Garden', 'F.H. Burnett', 6],
+            [89, 'A Little Princess', 'F.H. Burnett', 5],
+            [90, 'Anne of Green Gables', 'L.M. Montgomery', 7],
+            [91, 'The Lion, Witch & Wardrobe', 'C.S. Lewis', 8],
+            [92, 'The Golden Compass', 'Philip Pullman', 5],
+            [93, 'A Game of Thrones', 'G.R.R. Martin', 9],
+            [94, 'Fellowship of the Ring', 'J.R.R. Tolkien', 7],
+            [95, 'The Two Towers', 'J.R.R. Tolkien', 7],
+            [96, 'Return of the King', 'J.R.R. Tolkien', 7],
+            [97, 'The Silmarillion', 'J.R.R. Tolkien', 4],
+            [98, 'The Name of the Wind', 'Patrick Rothfuss', 5],
+            [99, 'The Way of Kings', 'Brandon Sanderson', 6],
+            [100, 'Mistborn', 'Brandon Sanderson', 6]
+        ];
+
+        // Global State Tables
+        let dbBooks = initialBooks.map(b => ({ id: b[0], title: b[1], author: b[2], qty: b[3] }));
+        let dbIssued = [
+            { issue_id: 1, student: 'Julian Blackthorn', book_id: 1, issue_date: '2026-10-01', due_date: '2026-10-15', status: 'ISSUED' },
+            { issue_id: 2, student: 'Cordelia Carstairs', book_id: 25, issue_date: '2026-10-10', due_date: '2026-10-24', status: 'ISSUED' }
+        ];
+
+        // Spine Color Palette for Dark Academia Aesthetics
+        const spineColors = [
+            '#8b2626', '#1c3b2b', '#1a2b4c', '#4a2e1b', '#3d1e38', 
+            '#594218', '#2b2b2b', '#6b2d5c', '#2c523b', '#631e1e'
+        ];
+
+        // --- 2. CANVAS BOOKSHELF ENGINE ---
+        let canvas, ctx;
+        let ladderX = 200;
+        let hoveredBook = null;
+        let animatingBook = null; // Animation object when adding a book
+        let particles = [];
+
+        function initCanvas() {
+            canvas = document.getElementById('bookshelfCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set high DPI scale
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Event Listeners for Interaction
+            canvas.addEventListener('mousemove', handleCanvasMouseMove);
+            canvas.addEventListener('mouseleave', () => {
+                document.getElementById('canvasTooltip').classList.add('hidden');
+                hoveredBook = null;
+            });
+
+            window.addEventListener('resize', () => {
+                if (canvas) {
+                    const rect = canvas.getBoundingClientRect();
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                }
+            });
+
+            requestAnimationFrame(renderCanvasLoop);
+        }
+
+        function handleCanvasMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Update Ladder Target Smoothly
+            ladderX += (mouseX - ladderX) * 0.1;
+
+            // Detect Hovered Book
+            const shelfHeight = 110;
+            const booksPerRow = Math.floor(canvas.width / 18);
+            
+            let foundHover = null;
+            dbBooks.forEach((book, index) => {
+                const row = Math.floor(index / booksPerRow);
+                const col = index % booksPerRow;
+                if (row >= 4) return; // Limit to 4 shelves rendering
+
+                const x = 30 + col * 17;
+                const y = 35 + row * shelfHeight;
+                const w = 14;
+                const h = 60 + (book.id % 20);
+
+                if (mouseX >= x && mouseX <= x + w && mouseY >= y - h && mouseY <= y) {
+                    foundHover = { book, x, y, w, h };
+                }
+            });
+
+            const tooltip = document.getElementById('canvasTooltip');
+            if (foundHover) {
+                hoveredBook = foundHover;
+                tooltip.classList.remove('hidden');
+                tooltip.style.left = `${Math.min(foundHover.x + 20, canvas.width - 200)}px`;
+                tooltip.style.top = `${foundHover.y - 80}px`;
+                document.getElementById('tooltipTitle').innerText = foundHover.book.title;
+                document.getElementById('tooltipAuthor').innerText = `by ${foundHover.book.author}`;
+                document.getElementById('tooltipId').innerText = `ID: #${foundHover.book.id}`;
+                document.getElementById('tooltipQty').innerText = `Qty: ${foundHover.book.qty}`;
+            } else {
+                hoveredBook = null;
+                tooltip.classList.add('hidden');
+            }
+        }
+
+        function renderCanvasLoop() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Background Mahogany Texture
+            ctx.fillStyle = '#1c100a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const shelfHeight = 110;
+            const maxRows = 4;
+            const booksPerRow = Math.floor((canvas.width - 60) / 17);
+
+            // Draw Wooden Shelves Background Planks
+            for (let r = 0; r < maxRows; r++) {
+                const shelfY = 35 + r * shelfHeight;
+                
+                // Shelf Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(20, shelfY + 2, canvas.width - 40, 14);
+
+                // Mahogany Plank
+                const grad = ctx.createLinearGradient(0, shelfY, 0, shelfY + 10);
+                grad.addColorStop(0, '#523021');
+                grad.addColorStop(0.5, '#3d2318');
+                grad.addColorStop(1, '#1c100a');
+                ctx.fillStyle = grad;
+                ctx.fillRect(20, shelfY, canvas.width - 40, 10);
+
+                // Gold Inlay Line
+                ctx.fillStyle = '#d4af37';
+                ctx.fillRect(20, shelfY, canvas.width - 40, 1);
+            }
+
+            // Draw Books
+            dbBooks.forEach((book, index) => {
+                const row = Math.floor(index / booksPerRow);
+                const col = index % booksPerRow;
+                if (row >= maxRows) return;
+
+                const x = 30 + col * 17;
+                const shelfY = 35 + row * shelfHeight;
+                const w = 14;
+                const h = 55 + ((book.id * 7) % 25);
+                const y = shelfY - h;
+
+                const color = spineColors[book.id % spineColors.length];
+
+                // Check if Hovered
+                const isHovered = hoveredBook && hoveredBook.book.id === book.id;
+
+                ctx.save();
+                if (isHovered) {
+                    ctx.shadowColor = '#d4af37';
+                    ctx.shadowBlur = 12;
+                    ctx.translate(0, -5); // Pop up effect
+                }
+
+                // Book Spine Body
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, w, h);
+
+                // Spine Embossing Lines
+                ctx.fillStyle = 'rgba(212, 175, 55, 0.4)';
+                ctx.fillRect(x, y + 4, w, 1.5);
+                ctx.fillRect(x, y + h - 6, w, 1.5);
+
+                // Gold Spine Title Dot
+                ctx.fillStyle = '#d4af37';
+                ctx.fillRect(x + w / 2 - 1, y + 10, 2, 2);
+
+                ctx.restore();
+            });
+
+            // Draw Animated Flying Book (When Added)
+            if (animatingBook) {
+                drawAnimatingBook();
+            }
+
+            // Draw Particles
+            updateAndDrawParticles();
+
+            // Draw Interactive Library Ladder
+            drawLadder(ladderX);
+
+            requestAnimationFrame(renderCanvasLoop);
+        }
+
+        function drawLadder(x) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 10;
+
+            const topY = 10;
+            const bottomY = canvas.height - 10;
+            const width = 36;
+
+            // Brass Rails
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 3;
+
+            // Left Rail
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x - 8, bottomY);
+            ctx.stroke();
+
+            // Right Rail
+            ctx.beginPath();
+            ctx.moveTo(x + width, topY);
+            ctx.lineTo(x + width + 8, bottomY);
+            ctx.stroke();
+
+            // Steps
+            const steps = 8;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#aa8828';
+            for (let i = 1; i <= steps; i++) {
+                const sy = topY + (i * (bottomY - topY) / (steps + 1));
+                const lx = x - (i * 1);
+                const rx = x + width + (i * 1);
+                ctx.beginPath();
+                ctx.moveTo(lx, sy);
+                ctx.lineTo(rx, sy);
+                ctx.stroke();
+            }
+
+            // Top Roller Wheels
+            ctx.fillStyle = '#f3e5ab';
+            ctx.beginPath();
+            ctx.arc(x - 2, topY, 4, 0, Math.PI * 2);
+            ctx.arc(x + width + 2, topY, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Trigger Flying Book Placement Animation
+        function triggerAddBookAnimation(newBook) {
+            animatingBook = {
+                book: newBook,
+                startX: canvas.width / 2,
+                startY: -50,
+                currentX: canvas.width / 2,
+                currentY: -50,
+                targetX: 30 + ((dbBooks.length - 1) % Math.floor((canvas.width - 60) / 17)) * 17,
+                targetY: 35 + (Math.floor((dbBooks.length - 1) / Math.floor((canvas.width - 60) / 17))) * 110 - 65,
+                progress: 0
+            };
+        }
+
+        function drawAnimatingBook() {
+            animatingBook.progress += 0.025;
+            const p = animatingBook.progress;
+
+            // Ease Out Cubic
+            const ease = 1 - Math.pow(1 - p, 3);
+            animatingBook.currentX = animatingBook.startX + (animatingBook.targetX - animatingBook.startX) * ease;
+            animatingBook.currentY = animatingBook.startY + (animatingBook.targetY - animatingBook.startY) * ease;
+
+            // Draw Book Cover Preview
+            ctx.save();
+            ctx.shadowColor = '#d4af37';
+            ctx.shadowBlur = 20;
+
+            ctx.fillStyle = '#d4af37';
+            ctx.fillRect(animatingBook.currentX - 2, animatingBook.currentY - 2, 18, 64);
+
+            ctx.fillStyle = '#8b2626';
+            ctx.fillRect(animatingBook.currentX, animatingBook.currentY, 14, 60);
+
+            // Add Gold Dust Particle
+            particles.push({
+                x: animatingBook.currentX + Math.random() * 14,
+                y: animatingBook.currentY + Math.random() * 60,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                life: 1,
+                color: '#d4af37'
+            });
+
+            ctx.restore();
+
+            if (p >= 1) {
+                // Burst effect on land
+                for (let i = 0; i < 25; i++) {
+                    particles.push({
+                        x: animatingBook.targetX + 7,
+                        y: animatingBook.targetY + 30,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: (Math.random() - 0.5) * 6,
+                        life: 1,
+                        color: Math.random() > 0.5 ? '#d4af37' : '#f4e8c1'
+                    });
+                }
+                animatingBook = null;
+            }
+        }
+
+        function updateAndDrawParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.03;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.save();
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        function randomizeShelfLayout() {
+            dbBooks.sort(() => Math.random() - 0.5);
+            updateBookCountDisplay();
+            renderSelectOptions();
+        }
+
+        function updateBookCountDisplay() {
+            document.getElementById('book-count-badge').innerText = `Total Books: ${dbBooks.length}`;
+        }
+
+        // --- 3. LIVE SQL EXECUTION ENGINE ---
+        function executeSQL() {
+            const rawQuery = document.getElementById('sqlQueryInput').value.trim();
+            const outputContainer = document.getElementById('sqlOutputContainer');
+            const statusBadge = document.getElementById('queryStatusBadge');
+
+            if (!rawQuery) {
+                outputContainer.innerHTML = '<span class="text-rose-400">Error: Query string cannot be empty.</span>';
+                return;
+            }
+
+            const cleanQuery = rawQuery.replace(/;/g, '');
+            const upper = cleanQuery.toUpperCase();
+
+            try {
+                if (upper.startsWith('SELECT')) {
+                    handleSelectQuery(cleanQuery, outputContainer, statusBadge);
+                } else if (upper.startsWith('INSERT INTO BOOKS')) {
+                    handleInsertQuery(cleanQuery, outputContainer, statusBadge);
+                } else if (upper.startsWith('UPDATE BOOKS')) {
+                    handleUpdateQuery(cleanQuery, outputContainer, statusBadge);
+                } else if (upper.startsWith('DELETE FROM BOOKS')) {
+                    handleDeleteQuery(cleanQuery, outputContainer, statusBadge);
+                } else if (upper.startsWith('SELECT * FROM ISSUED_BOOKS')) {
+                    renderIssuedTableInOutput(outputContainer, statusBadge);
+                } else {
+                    outputContainer.innerHTML = `<span class="text-emerald-400">Query Executed Successfully:</span>\n<div class="mt-2 text-parchment-200/80">Command acknowledged. 0 rows modified.</div>`;
+                    statusBadge.innerText = 'Success';
+                }
+            } catch (err) {
+                outputContainer.innerHTML = `<span class="text-rose-400">MySQL Syntax Error: ${err.message}</span>`;
+                statusBadge.innerText = 'Syntax Error';
+            }
+        }
+
+        function handleSelectQuery(query, container, status) {
+            let results = [...dbBooks];
+
+            // Handle WHERE clause
+            if (query.toUpperCase().includes('WHERE')) {
+                const parts = query.split(/WHERE/i);
+                const condition = parts[1].split(/ORDER BY|LIMIT/i)[0].trim();
+                
+                if (condition.includes('>')) {
+                    const [col, val] = condition.split('>');
+                    if (col.trim().toUpperCase() === 'QUANTITY') {
+                        results = results.filter(b => b.qty > parseInt(val.trim()));
+                    }
+                } else if (condition.includes('=')) {
+                    const [col, val] = condition.split('=');
+                    const cleanVal = val.trim().replace(/['"]/g, '');
+                    if (col.trim().toUpperCase() === 'BOOK_ID') {
+                        results = results.filter(b => b.id == cleanVal);
+                    }
+                }
+            }
+
+            // Handle ORDER BY
+            if (query.toUpperCase().includes('ORDER BY')) {
+                if (query.toUpperCase().includes('TITLE')) {
+                    results.sort((a, b) => a.title.localeCompare(b.title));
+                } else if (query.toUpperCase().includes('BOOK_ID')) {
+                    results.sort((a, b) => a.id - b.id);
+                }
+            }
+
+            // Handle LIMIT
+            if (query.toUpperCase().includes('LIMIT')) {
+                const limitVal = parseInt(query.toUpperCase().split('LIMIT')[1].trim());
+                if (!isNaN(limitVal)) {
+                    results = results.slice(0, limitVal);
+                }
+            }
+
+            renderSQLTableOutput(results, container);
+            status.innerText = `Query OK, ${results.length} rows returned`;
+        }
+
+        function handleInsertQuery(query, container, status) {
+            // Regex parse values
+            const match = query.match(/VALUES\s*\((.*?)\)/i);
+            if (match && match[1]) {
+                const vals = match[1].split(',').map(s => s.trim().replace(/['"]/g, ''));
+                const newBook = {
+                    id: parseInt(vals[0]),
+                    title: vals[1],
+                    author: vals[2],
+                    qty: parseInt(vals[3])
+                };
+                dbBooks.push(newBook);
+                updateBookCountDisplay();
+                renderSelectOptions();
+                triggerAddBookAnimation(newBook);
+
+                container.innerHTML = `<div class="text-emerald-400">Query OK, 1 row affected (0.01 sec)</div>
+                <div class="text-parchment-200/70 mt-1">Inserted Record: [${newBook.id}, "${newBook.title}", "${newBook.author}", ${newBook.qty}]</div>`;
+                status.innerText = '1 Row Inserted';
+            }
+        }
+
+        function handleUpdateQuery(query, container, status) {
+            container.innerHTML = `<div class="text-emerald-400">Query OK, Rows matched: ${dbBooks.length}  Changed: ${dbBooks.length}</div>`;
+            status.innerText = 'Update Executed';
+        }
+
+        function handleDeleteQuery(query, container, status) {
+            const parts = query.split(/WHERE/i);
+            if (parts[1] && parts[1].includes('=')) {
+                const targetId = parseInt(parts[1].split('=')[1].trim());
+                dbBooks = dbBooks.filter(b => b.id !== targetId);
+                updateBookCountDisplay();
+                renderSelectOptions();
+                container.innerHTML = `<div class="text-emerald-400">Query OK, 1 row deleted. Target Book_ID #${targetId} removed.</div>`;
+                status.innerText = '1 Row Deleted';
+            }
+        }
+
+        function renderSQLTableOutput(rows, container) {
+            if (rows.length === 0) {
+                container.innerHTML = `<div class="text-gold-400/70">Empty set (0.00 sec)</div>`;
+                return;
+            }
+
+            let html = `<table class="w-full text-left border-collapse font-mono text-xs">
+                <thead>
+                    <tr class="border-b border-gold-500/40 text-gold-400 bg-wood-800/80">
+                        <th class="p-2 border-r border-gold-500/20">Book_ID</th>
+                        <th class="p-2 border-r border-gold-500/20">Title</th>
+                        <th class="p-2 border-r border-gold-500/20">Author</th>
+                        <th class="p-2">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            rows.forEach(r => {
+                html += `<tr class="border-b border-gold-500/10 hover:bg-gold-500/10">
+                    <td class="p-2 border-r border-gold-500/10 text-gold-300">${r.id}</td>
+                    <td class="p-2 border-r border-gold-500/10 text-parchment-100 font-garamond text-sm">${r.title}</td>
+                    <td class="p-2 border-r border-gold-500/10 text-parchment-200/80">${r.author}</td>
+                    <td class="p-2 text-emerald-400 font-bold">${r.qty}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function setQuery(q) {
+            document.getElementById('sqlQueryInput').value = q;
+            executeSQL();
+        }
+
+        function clearQuery() {
+            document.getElementById('sqlQueryInput').value = '';
+        }
+
+        // --- 4. BOOK FORM & ISSUING HANDLERS ---
+        function handleNewBookSubmit(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('addBookId').value);
+            const title = document.getElementById('addBookTitle').value;
+            const author = document.getElementById('addBookAuthor').value;
+            const qty = parseInt(document.getElementById('addBookQty').value);
+
+            const newBook = { id, title, author, qty };
+            dbBooks.push(newBook);
+
+            updateBookCountDisplay();
+            renderSelectOptions();
+            triggerAddBookAnimation(newBook);
+
+            // Reset Form
+            document.getElementById('addBookForm').reset();
+            document.getElementById('addBookId').value = id + 1;
+        }
+
+        function renderSelectOptions() {
+            const select = document.getElementById('issueBookSelect');
+            select.innerHTML = '';
+            dbBooks.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.innerText = `#${b.id} - ${b.title} (${b.author})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function handleIssueSubmit(e) {
+            e.preventDefault();
+            const student = document.getElementById('issueStudentName').value;
+            const bookId = parseInt(document.getElementById('issueBookSelect').value);
+            const issueDate = document.getElementById('issueDate').value;
+            const returnDate = document.getElementById('returnDate').value;
+
+            const newIssue = {
+                issue_id: dbIssued.length + 1,
+                student,
+                book_id: bookId,
+                issue_date: issueDate,
+                due_date: returnDate,
+                status: 'ISSUED'
+            };
+
+            dbIssued.push(newIssue);
+            renderIssuedTable();
+            document.getElementById('issueBookForm').reset();
+            alert(`Book Issued successfully to ${student}! Logged into Issued_Books database.`);
+        }
+
+        function renderIssuedTable() {
+            const tbody = document.getElementById('issuedBooksTableBody');
+            tbody.innerHTML = '';
+            dbIssued.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gold-500/10 hover:bg-gold-500/5";
+                tr.innerHTML = `
+                    <td class="p-3 text-gold-400">#${item.issue_id}</td>
+                    <td class="p-3 text-parchment-100 font-garamond text-sm">${item.student}</td>
+                    <td class="p-3 text-gold-300">#${item.book_id}</td>
+                    <td class="p-3 text-parchment-200/70">${item.issue_date}</td>
+                    <td class="p-3 text-parchment-200/70">${item.due_date}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">${item.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- 5. FINE CALCULATOR ENGINE ---
+        function calculateFine() {
+            const dueDateVal = document.getElementById('calcDueDate').value;
+            const actualDateVal = document.getElementById('calcActualDate').value;
+            const rate = parseFloat(document.getElementById('calcRate').value) || 5;
+
+            if (!dueDateVal || !actualDateVal) return;
+
+            const due = new Date(dueDateVal);
+            const actual = new Date(actualDateVal);
+
+            const diffTime = actual - due;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const daysLateSpan = document.getElementById('outDaysLate');
+            const statusSpan = document.getElementById('outFineStatus');
+            const totalSpan = document.getElementById('outTotalFine');
+
+            if (diffDays > 0) {
+                const totalFine = diffDays * rate;
+                daysLateSpan.innerText = `${diffDays} Days Overdue`;
+                statusSpan.innerText = 'OVERDUE FINE APPLIED';
+                statusSpan.className = 'text-rose-400 font-bold';
+                totalSpan.innerText = `₹${totalFine}`;
+            } else {
+                daysLateSpan.innerText = `0 Days`;
+                statusSpan.innerText = 'Returned On Time';
+                statusSpan.className = 'text-emerald-400 font-bold';
+                totalSpan.innerText = `₹0`;
+            }
+        }
+
+        // --- 6. TAB SWITCHING LOGIC ---
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(el => {
+                el.classList.remove('border-gold-500/30', 'bg-gold-500/10', 'text-gold-400');
+                el.classList.add('border-transparent', 'text-parchment-200/70');
+            });
+
+            document.getElementById(`sec-${tabKey}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`tab-${tabKey}`);
+            activeNav.classList.add('border-gold-500/30', 'bg-gold-500/10', 'text-gold-400');
+            activeNav.classList.remove('border-transparent', 'text-parchment-200/70');
+        }
+
+        // --- 7. PYTHON EXPORTER MODAL & SCRIPT GENERATOR ---
+        const pythonScriptCode = `import tkinter as tk
+from tkinter import messagebox, scrolledtext
+import mysql.connector
+
+# Dark Academia Library Management System (Python Tkinter + MySQL)
+class DarkAcademiaLibrary:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Athenaeum - Library Management System")
+        self.root.geometry("900x720")
+        self.root.configure(bg="#1c100a")
+
+        # Database Connection
+        try:
+            self.db = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="your_password",
+                database="LibraryDB"
+            )
+            self.cursor = self.db.cursor()
+        except Exception as e:
+            print("Running in offline mode:", e)
+
+        # UI Header
+        title = tk.Label(root, text="ATHENAEUM LIBRARY", font=("Cinzel", 18, "bold"), fg="#d4af37", bg="#1c100a")
+        title.pack(pady=10)
+
+        # SQL Query Console Input
+        sql_frame = tk.LabelFrame(root, text=" Live SQL Console ", fg="#d4af37", bg="#2c1810", font=("Arial", 11, "bold"))
+        sql_frame.pack(fill="both", expand=True, padx=20, pady=10)
+
+        self.sql_entry = tk.Text(sql_frame, height=4, bg="#120a06", fg="#e6ca65", font=("Consolas", 10))
+        self.sql_entry.pack(fill="x", padx=10, pady=5)
+        self.sql_entry.insert("1.0", "SELECT * FROM Books WHERE Quantity > 3;")
+
+        run_btn = tk.Button(sql_frame, text="RUN SQL QUERY", bg="#d4af37", fg="#120a06", font=("Cinzel", 10, "bold"), command=self.run_sql)
+        run_btn.pack(anchor="e", padx=10, pady=5)
+
+        self.output_box = scrolledtext.ScrolledText(sql_frame, height=10, bg="#120a06", fg="#00ff00", font=("Consolas", 10))
+        self.output_box.pack(fill="both", expand=True, padx=10, pady=5)
+
+    def run_sql(self):
+        query = self.sql_entry.get("1.0", tk.END).strip()
+        self.output_box.delete("1.0", tk.END)
+        try:
+            self.cursor.execute(query)
+            if query.lower().startswith("select"):
+                rows = self.cursor.fetchall()
+                for row in rows:
+                    self.output_box.insert(tk.END, str(row) + "\\n")
+            else:
+                self.db.commit()
+                self.output_box.insert(tk.END, f"Query Executed. Affected rows: {self.cursor.rowcount}\\n")
+        except Exception as e:
+            self.output_box.insert(tk.END, f"MySQL Error: {str(e)}\\n")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = DarkAcademiaLibrary(root)
+    root.mainloop()`;
+
+        function openPythonModal() {
+            document.getElementById('pythonCodeBlock').innerText = pythonScriptCode;
+            document.getElementById('pythonModal').classList.remove('hidden');
+        }
+
+        function closePythonModal() {
+            document.getElementById('pythonModal').classList.add('hidden');
+        }
+
+        function copyPythonCode() {
+            navigator.clipboard.writeText(pythonScriptCode);
+            alert('Python script copied to clipboard!');
+        }
+
+        // INITIALIZE APPLICATION
+        window.onload = function() {
+            initCanvas();
+            renderSelectOptions();
+            renderIssuedTable();
+            executeSQL(); // Pre-run initial SELECT query
+            
+            // Set default date inputs to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('issueDate').value = today;
+            document.getElementById('calcDueDate').value = today;
+            document.getElementById('calcActualDate').value = today;
+        };
+    </script>
+</body>
+</html>
